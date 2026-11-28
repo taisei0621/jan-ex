@@ -5,6 +5,7 @@ import { Sparkles, Layers, ShieldAlert, Coins } from 'lucide-react';
 import { RULE_CONFIGS } from '@/engine/rules';
 import { MahjongRuleConfig } from '@/types/mahjong';
 import { MightyGame } from '@/components/MightyGame';
+import { MightyMatchGame } from '@/components/MightyMatchGame';
 import { WashizuGame } from '@/components/WashizuGame';
 import { TotenkoGame } from '@/components/TotenkoGame';
 import { MarchaoGame } from '@/components/MarchaoGame';
@@ -18,6 +19,7 @@ const DISPLAY_RULES: MahjongRuleConfig['id'][] = [
 
 export default function Home() {
   const [activeRuleId, setActiveRuleId] = useState<MahjongRuleConfig['id']>('mighty');
+  const [mightySubMode, setMightySubMode] = useState<'match' | 'solo'>('match');
   const activeRule = RULE_CONFIGS[activeRuleId];
 
   const getRuleIcon = (id: MahjongRuleConfig['id']) => {
@@ -132,7 +134,35 @@ export default function Home() {
         </section>
 
         {/* ゲームエリア */}
-        {activeRuleId === 'mighty' && <MightyGame />}
+        {activeRuleId === 'mighty' && (
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setMightySubMode('match')}
+                className={`px-4 py-2 rounded-xl text-xs font-black transition ${
+                  mightySubMode === 'match'
+                    ? 'bg-emerald-400 text-slate-950 shadow-md'
+                    : 'bg-black/40 text-emerald-200 border border-emerald-800/60 hover:bg-emerald-950/60'
+                }`}
+              >
+                4人対局（CPU戦・東風戦）
+              </button>
+              <button
+                type="button"
+                onClick={() => setMightySubMode('solo')}
+                className={`px-4 py-2 rounded-xl text-xs font-black transition ${
+                  mightySubMode === 'solo'
+                    ? 'bg-emerald-400 text-slate-950 shadow-md'
+                    : 'bg-black/40 text-emerald-200 border border-emerald-800/60 hover:bg-emerald-950/60'
+                }`}
+              >
+                一人スコアアタック（10巡）
+              </button>
+            </div>
+            {mightySubMode === 'match' ? <MightyMatchGame /> : <MightyGame />}
+          </div>
+        )}
         {activeRuleId === 'washizu' && <WashizuGame />}
         {activeRuleId === 'totenko' && <TotenkoGame />}
         {activeRuleId === 'marchao' && <MarchaoGame />}

@@ -16,6 +16,11 @@ import {
   createMarchaoWall,
   evaluateMarchaoAgari,
 } from '@/engine/marchaoEngine';
+import {
+  executeDiscard,
+  initMightyMatch,
+  proceedToNextRound,
+} from '@/engine/mightyMatchEngine';
 
 function makeTiles(typeIds: number[]): TileInstance[] {
   return typeIds.map((typeId, idx) => ({
@@ -138,5 +143,46 @@ describe('Phase 4: マーチャオAルールエンジン', () => {
     expect(res).not.toBeNull();
     expect(res?.usedWhitePocchi).toBe(true);
     expect(res?.shugiCount).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe('少牌マイティ 4人対局エンジン', () => {
+  it('初期対局で4人に12枚ずつ配牌され、25,000点持ちで東1局が開始される', () => {
+    const match = initMightyMatch();
+    expect(match.kyoku).toBe(1);
+    expect(match.players).toHaveLength(4);
+    for (const p of match.players) {
+      expect(p.hand).toHaveLength(12);
+      expect(p.score).toBe(25000);
+    }
+    expect(match.currentTsumo).not.toBeNull();
+    expect(match.phase).toBe('player_action');
+  });
+
+  it('打牌とリーチ宣言が正しく持ち点・河・供託に反映される', () => {
+    const match = initMightyMatch();
+    const discardUid = match.currentTsumo!.uid;
+    const after = executeDiscard(match, 0, discardUid, true);
+    expect(after.players[0].isRiichi).toBe(true);
+    expect(after.players[0].score).toBe(24000);
+    expect(after.players[0].discards).toHaveLength(1);
+    expect(after.players[0].discards[0].isRiichiDeclare).toBe(true);
+    expect(after.riichiSticks).toBe(1);
+  });
+
+  it('流局からの次局進行で東2局へ進む（親ノーテン時）', () => {
+    const match = initMightyMatch();
+    const fakeRoundEnd = {
+      ...match,
+      phase: 'round_end' as const,
+      roundResult: {
+        type: 'ryuukyoku' as const,
+        tenpaiSeats: [],
+        pointDeltas: [0, 0, 0, 0] as [number, number, number, number],
+      },
+    };
+    const next = proceedToNextRound(fakeRoundEnd);
+    expect(next.kyoku).toBe(2);
+    expect(next.dealerSeat).toBe(1);
   });
 });
